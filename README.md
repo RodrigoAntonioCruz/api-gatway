@@ -20,21 +20,21 @@ O objetivo principal é conseguir proteger, através da configuração do kong e
 
 ![Diagrama de fluxo](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/diagrama-kong-keycloak.png)
 
-- 1. O aplicativo do usuário envia uma solicitação ao gateway API (kong). No entanto, a solicitação não está autenticada (ou contém uma autenticação inválida).
+- O aplicativo do usuário envia uma solicitação ao gateway API (kong). No entanto, a solicitação não está autenticada (ou contém uma autenticação inválida).
 
-- 2. A API do gateway responde ao cliente indicando a falta de autenticação.
+- API do gateway responde ao cliente indicando a falta de autenticação.
 
-- 3. Portanto, o aplicativo precisa fazer login. Portanto, ele envia uma solicitação específica de login para o Single Sign On (Keycloak), incluindo as credenciais do usuário e o client-id específico atribuído ao próprio aplicativo.
+- Portanto, o aplicativo precisa fazer login. Portanto, ele envia uma solicitação específica de login para o Single Sign On (Keycloak), incluindo as credenciais do usuário e o client-id específico atribuído ao próprio aplicativo.
 
-- 4. Se as credenciais forem válidas, o SSO (Keycloak) emite para a aplicação um token (e o token de atualização relacionado), com o qual autenticar as solicitações à API Gateway (Kong)
+- Se as credenciais forem válidas, o SSO (Keycloak) emite para a aplicação um token (e o token de atualização relacionado), com o qual autenticar as solicitações à API Gateway (Kong)
 
-- 5. A aplicação então repete a solicitação adicionando o token válido como autorização
+- A aplicação então repete a solicitação adicionando o token válido como autorização
 
-- 6. Nos bastidores, a API do gateway procederá à verificação (por meio de introspecção) se o token em questão corresponde a uma sessão no Single Sign On (Keycloak).
+- Nos bastidores, a API do gateway procederá à verificação (por meio de introspecção) se o token em questão corresponde a uma sessão no Single Sign On (Keycloak).
 
-- 7. O resultado da introspecção é devolvido a Kong, que tratará da solicitação de inscrição adequadamente
+- O resultado da introspecção é devolvido a Kong, que tratará da solicitação de inscrição adequadamente
 
-- 8. Se o resultado da introspecção for positivo, Kong atenderá à solicitação. Alternativamente estaremos na etapa 2 (o pedido é recusado)
+- Se o resultado da introspecção for positivo, Kong atenderá à solicitação. Alternativamente estaremos na etapa 2 (o pedido é recusado)
 
 
 Observação:
