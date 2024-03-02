@@ -6,13 +6,13 @@
 - [**docker**](https://docs.docker.com/install/)
 - [**docker-compose**](https://docs.docker.com/compose/overview/)
 - [**jq**](https://stedolan.github.io/jq/)
-- [**curl** cheatsheet ;)](https://devhints.io/curl)
+- [**curl** cheatsheet](https://devhints.io/curl)
 
 ### Versões instaladas
 
-- Kong 2.7.1 - alpine
+- Kong 2.8.1 - alpine
 - Konga 0.14.7
-- Keycloak 17.0.0
+- Keycloak 23.0.3
 
 ### Objetivo
 O principal objetivo é garantir a segurança por meio da configuração do Kong e do Keycloak para proteger os recursos da API. Para uma compreensão mais detalhada, examinaremos o seguinte fluxo de solicitação:
@@ -42,12 +42,11 @@ O aplicativo pode fazer login no keycloak antes mesmo de enviar a primeira solic
 ---
 
 ### Breve introdução ao OIDC
+OpenID é uma camada simplificada de identidade que opera sobre o protocolo OAuth 2.0. Ele possibilita que os clientes verifiquem a identidade do usuário final com base na autenticação realizada por um Authorization Server, além de permitir a obtenção de informações básicas sobre o perfil do usuário.
 
-OpenID é um nível simples de identidade implementado acima do protocolo OAuth 2.0: permite aos seus Clientes verificar a identidade do utilizador final, com base na autenticação realizada por um Authorization Server, bem como obter informações básicas sobre o perfil do utilizador.
+A utilização de um Security Token Service (STS) adiciona uma camada extra de segurança ao processo. Nesse caso, o Resource Provider (RP) é redirecionado para um STS, que autentica o RP e emite um token de segurança, concedendo acesso em vez de o aplicativo autenticar diretamente o RP. As declarações contidas nos tokens são extraídas e utilizadas para diversas atividades relacionadas à identidade.
 
-Com um Security Token Service (STS), o RP é redirecionado para um STS, que autentica o RP e emite um token de segurança que concede acesso, em vez do aplicativo que autentica diretamente o RP. As declarações são extraídas de tokens e usadas para atividades relacionadas à identidade.
-
-O padrão OpenID define uma situação em que um site cooperante pode atuar como um RP, permitindo ao usuário acessar vários sites usando um conjunto de credenciais. O utilizador beneficia de não ter de partilhar credenciais de acesso com vários sites e os operadores do site colaborador não devem desenvolver o seu próprio mecanismo de acesso.
+O padrão OpenID estabelece uma situação na qual um site cooperante pode atuar como um RP, permitindo que o usuário acesse vários sites usando um conjunto único de credenciais. Isso beneficia o usuário, pois ele não precisa compartilhar suas credenciais de acesso com múltiplos sites, enquanto os operadores do site colaborador não precisam desenvolver seu próprio sistema de autenticação.
 
 :point_right: Links úteis
 
@@ -126,16 +125,13 @@ docker-compose ps
 
 ### 2. Configuração do Konga
 
-Konga é um painel de administração do Kong. Oferece-nos um painel visual através do qual podemos realizar as configurações do Kong (bem como inspecionar as configurações feitas a partir da linha de comando).
+O Konga é uma interface de administração para o Kong, fornecendo um painel visual que facilita a configuração do Kong, além de permitir a inspeção das configurações feitas através da linha de comando.
 
-Konga está escutando na porta 1337. Portanto, iniciamos um navegador e apontamos para a url http://192.168.0.223:1337
+Para acessar o Konga, basta abrir um navegador e apontar para a URL http://192.168.0.133:1337, já que o Konga está escutando na porta 1337.
 
-Para fazermos login no konga, precisaremos registrar uma conta de administrador. Para testes, use credenciais simples e fáceis de lembrar. Para sistemas de produção, utilize senhas que atendam aos padrões de segurança!
+Para fazer login no Konga, é necessário registrar uma conta de administrador. Para testes, recomenda-se utilizar credenciais simples e fáceis de lembrar. No entanto, em sistemas de produção, é crucial utilizar senhas que atendam aos padrões de segurança.
 
-Após cadastrar o usuário administrador, será possível efetuar login.
-
-Uma vez logado, precisaremos ativar a conexão com Kong. Digite em "Nome" o valor "kong" e como "Kong Admin URL" o seguinte endereço: http://kong:8001 e depois salve.
-
+Após cadastrar o usuário administrador e efetuar o login, será possível ativar a conexão com o Kong. Para isso, basta inserir "kong" como nome e definir o endereço "Kong Admin URL" como http://kong:8001, e então salvar as configurações.
 
 ### Criação usuário administrativo no Konga
 
@@ -162,31 +158,105 @@ Para realizar testes no sistema, faremos uso da [Fake Store Api](https://fakesto
 
 3.1 Essa solicitação registra nosso serviço a ser protegido no Kong. Utilize o seguinte comando cURL:
 
-![Register Service](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/response-criacao-rota-kong.png)
-
+```bash
+curl -s -X POST http://192.168.0.133:8001/services \
+    -d name=ms-products \
+    -d url=https://fakestoreapi.com/products \
+    | jq
+{
+    "connect_timeout": 60000,
+    "host": "fakestoreapi.com"
+}
+```
+- Se a requisição for bem-sucedida, você receberá a seguinte resposta:
+```bash
+{
+  "created_at": 1709401849,
+  "updated_at": 1709401849,
+  "protocol": "https",
+  "read_timeout": 60000,
+  "write_timeout": 60000,
+  "host": "fakestoreapi.com",
+  "tls_verify": null,
+  "tls_verify_depth": null,
+  "enabled": true,
+  "retries": 5,
+  "id": "de01eaa8-5502-452c-9dcf-b06734f30e1f",
+  "name": "ms-products",
+  "connect_timeout": 60000,
+  "path": "/products",
+  "port": 443,
+  "tags": null,
+  "ca_certificates": null,
+  "client_certificate": null
+}
+```
 
 3.2 Anote o ID do serviço registrado (no exemplo é 580b9448-d6b9-47aa-8f42-e275f44b8296) e use-o para fazer a próxima chamada à API do kong que permite adicionar uma rota ao serviço registrado.
 
-![Add Service Route](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/response-de-adi%C3%A7%C3%A3o-de-rota-ao-serv%C3%A7o..png)
+```bash
+curl -s -X POST http://192.168.0.133:8001/services/42f8abea-b857-4c2d-8a2c-bb0c15a4597f/routes -d "paths[]=/products" \
+    | python -mjson.tool
+{
+    "destinations": null,
+    "hosts": null,
+    "methods": null,
+    "name": null,
+    "paths": [
+        "/products"
+    ]
+}
+```
+- Se a requisição for bem-sucedida, você receberá a seguinte resposta:
+```bash
+{
+    "created_at": 1709401983,
+    "updated_at": 1709401983,
+    "paths": [
+        "/products"
+    ],
+    "methods": null,
+    "sources": null,
+    "request_buffering": true,
+    "response_buffering": true,
+    "hosts": null,
+    "https_redirect_status_code": 426,
+    "headers": null,
+    "preserve_host": false,
+    "regex_priority": 0,
+    "service": {
+        "id": "de01eaa8-5502-452c-9dcf-b06734f30e1f"
+    },
+    "id": "08049b21-a5c1-45fc-bcff-5be82cf84a4b",
+    "name": null,
+    "snis": null,
+    "protocols": [
+        "http",
+        "https"
+    ],
+    "strip_path": true,
+    "tags": null,
+    "destinations": null,
+    "path_handling": "v0"
+}
+```
 
 
 ### 4. Configuração do Keycloak
 
-O Keycloak estará disponível na url http://192.168.0.223:8180. Você pode fazer login usando credenciais dentro do arquivo docker-compose.yml, (as credenciais padrão são admin/admin).
+O Keycloak estará disponível na url http://192.168.0.133:8180. Você pode fazer login usando credenciais dentro do arquivo docker-compose.yml, (as credenciais padrão são admin/admin).
 
 ![Login Keycloak](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-login.png)
 
 Após o login, clique no botão “Adicionar Realm”: este botão aparece quando o mouse passa sobre o nome do realm (Master) no canto superior esquerdo:
 
-![Add Realm Keycloak](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-add-realm.png)
-
 Você precisa atribuir um nome ao realm. Para este exemplo, optei pelo nome "central", mas sinta-se à vontade para escolher o nome que melhor se adeque às suas necessidades:
 
-![Add New Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/add-new-realm.png)
+![Add Realm Keycloak](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-add-new-realm.png)
 
 Após salvar, você será redirecionado para a página de configurações do realm:
 
-![Created Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/realm-created.png)
+![Created Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-realm-created.png)
 
 Esta página contém muitas abas, cada uma com diversos campos de configuração.
 
@@ -196,57 +266,113 @@ Após a criação do domínio, é necessário adicionar dois clientes:
 
 - Outro cliente que será usado para acessar a API através do Kong.
 
-Para criar o primeiro cliente, chamado "kong", selecione “Clientes” no menu da barra lateral esquerda e clique no botão “Criar” localizado no lado direito da página.
+Para criar o primeiro cliente, chamado "kong", selecione “Clients” no menu da barra lateral esquerda e clique no botão “Create client” localizado a esquerda do centro da página.
 
-![Add Client Private Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/add-client-private-realm.png)
+![Create Client Private Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/create-client-private-realm-1.png)
 
+Após nomear o cliente, avance para o próximo passo. Note que precisamos criar um cliente privado para comunicação via OIDC. Portanto, neste passo, habilitaremos a opção 'Client authentication'. Quando esta opção está ativada, o tipo OIDC é configurado como acesso confidencial. Quando está desativada, o tipo de acesso é definido como público.
 
-No campo "Cliente ID", insira a string "kong" e depois clique no botão "Salvar" ou "Confirmar" para concluir a criação do cliente.
+![Create Client Private Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/create-client-private-realm-2.png)
 
+Neste passo, definimos a 'Root URL' se aplicável, 'Valid redirect URIs' e salvamos nosso cliente.
 
-![Add Client Private Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/config-client-private-realm.png)
+![Create Client Private Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/create-client-private-realm-3.png)
 
-Atenção para os campos específicos e a aba onde podemos encontrar o segredo necessário:
+Por fim, se necessário alterar alguma informação, verifique novamente e então salve as alterações.
 
-- Client Protocol: Escolha "openid-connect", já que esta conta é para OIDC.
-
-- Access Type: Selecione "confidencial". Isso indica que o cliente requer um segredo para iniciar o processo de login. Essa chave será utilizada posteriormente na configuração do Kong OIDC.
-
-- Root Url: Forneça o URL raiz, se aplicável.
-
-- Valid Redirect URLs: Preencha este campo com os URLs válidos para redirecionamento.
+![Create Client Private Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/create-client-private-realm-4.png)
 
 Na aba "Credentials", você encontrará o segredo necessário que será utilizado para configurar o Kong OIDC. Preste atenção a esses detalhes ao configurar o cliente.
 
-![Secret Client Private Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/generate-secret-client-private.png)
+![Secret Client Private Realm](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-client-private-secret.png)
 
 Agora, vamos criar um segundo cliente com o nome 'application'
 
-![Create Client Public](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/create-client-public-application.png)
+![Create Client Public](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-client-public-realm-1.png)
 
-Após criar o cliente 'application', proceda com suas configurações
+Avance para o próximo passo, agora estamos criando um cliente público, ele servirá para acessar a API através do Kong. Nesse contexto as configurações necessárias podem variar neste caso.
 
-![Config Client Public](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/config-client-public-application.png)
+![Create Client Public](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-client-public-realm-2.png)
 
-O importante aqui é o tipo de acesso: "público" implica que o processo de login exige as credenciais do usuário para ser concluído.
+Para esse cliente em específico, não haverá configurações de URL, deixamos em branco.
+
+![Create Client Public](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-client-public-realm-3.png)
+
+Finalizando, conferimos e se necessário alteramos e salvamos as alterações.
+![Create Client Public](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-client-public-realm-4.png)
 
 Agora, vamos criar um usuário que será utilizado posteriormente para autenticação. Para isso, clique no menu lateral esquerdo em "Manage" > "Users", e em seguida, no lado direito da página, clique no botão "Add User"
 
-![Create User Application](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/create-user-application.png)
+![Create User Application](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-user-create.png)
 
-Atenção ao campo "Email Verified" (você deve ativá-lo, caso contrário o keycloak tentará validar o e-mail do usuário). O usuário ainda não possui uma senha. Então vá na aba "Credentials" e preencha os campos "New password" e "Password Confirmation" com a senha do usuário. Coloque a chave "Temporary" em "Off", caso contrário o keycloak solicitará ao usuário que altere a senha no primeiro login. Clique em "Set Password" para aplicar a credencial.
+Atenção ao campo "Email Verified" (você deve ativá-lo, caso contrário o keycloak tentará validar o e-mail do usuário). O usuário ainda não possui uma senha. Então vá na aba "Credentials" e preencha os campos "New password" e "Password Confirmation" com a senha do usuário. Coloque a chave "Temporary" em "Off", caso contrário o keycloak solicitará ao usuário que altere a senha no primeiro login. Clique em "save" para aplicar a credencial.
 
-![Set Password User Application](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/set-password-user-application.png)
+![Set Password User Application](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-user-set-password-1.png)
+
+Após clicar em save o sistema pergunta se "Você tem certeza de que deseja definir a senha para o usuário"
+![Set Password User Application](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-user-set-password-2.png)
+
+Caso sua resposta seja "Save password" você terá a senha persistida para o usuário
+![Set Password User Application](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-user-set-password-3.png)
 
 ### 5. Configuração Kong como cliente Keycloak
 
 Para ativar a funcionalidade do OIDC com o Kong como cliente do Keycloak e permitir a introspecção, é necessário chamar a API Admin Rest do Kong.
 
-A API relevante é a /plugins, que permite adicionar um plugin globalmente ao Kong.
+A API relevante é /plugins, que permite adicionar um plugin globalmente ao Kong.
 
 Para configurar o plugin OIDC, você precisará fazer a seguinte requisição:
 
-![Request Kong Plugin OIDC](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/Configura%C3%A7%C3%A3o%20Kong%20como%20cliente%20Keycloak.png)
+```bash
+curl -s -X POST http://192.168.0.133:8001/plugins \
+  -d name=oidc \
+  -d config.client_id=kong \
+  -d config.client_secret=GspsUKQJgDZIDKG4N1Mdd120TmtSBVwP \
+  -d config.bearer_only=yes \
+  -d config.realm=central \
+  -d config.introspection_endpoint=http://192.168.0.133:8180/realms/central/protocol/openid-connect/token/introspect \
+  -d config.discovery=http://192.168.0.133:8180/auth/realms/central/.well-known/openid-configuration \
+  | jq
+```
+- Se a requisição for bem-sucedida, você receberá a seguinte resposta:
+
+```bash
+{
+  "created_at": 1709402018,
+  "service": null,
+  "id": "ee5b8bb5-af72-4e3c-9acd-77d04dd32ec4",
+  "name": "oidc",
+  "protocols": [
+    "grpc",
+    "grpcs",
+    "http",
+    "https"
+  ],
+  "consumer": null,
+  "route": null,
+  "tags": null,
+  "enabled": true,
+  "config": {
+    "logout_path": "/logout",
+    "bearer_only": "yes",
+    "realm": "central",
+    "scope": "openid",
+    "client_id": "kong",
+    "filters": null,
+    "ssl_verify": "no",
+    "redirect_after_logout_uri": "/",
+    "response_type": "code",
+    "session_secret": null,
+    "introspection_endpoint": "http://192.168.0.133:8180/realms/central/protocol/openid-connect/token/introspect",
+    "client_secret": "GspsUKQJgDZIDKG4N1Mdd120TmtSBVwP",
+    "discovery": "http://192.168.0.133:8180/auth/realms/central/.well-known/openid-configuration",
+    "introspection_endpoint_auth_method": null,
+    "redirect_uri_path": null,
+    "recovery_page_path": null,
+    "token_endpoint_auth_method": "client_secret_post"
+  }
+}
+```
 
 Se desejar mais detalhes sobre as várias configurações utilizadas neste pedido, visite a página do GitHub do plugin Kong OIDC. Consulte a seção "Uso" para mais informações.
 
@@ -261,12 +387,12 @@ Após a conclusão bem-sucedida da configuração, você pode visualizar a confi
 
 Se realizar uma solicitação diretamente à API usando o Postman ou Curl, notará que agora está protegida e retornará o código de status 401, indicando acesso não autorizado.
 
-![API Protected Kong Keykloak](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/401-kong-keycloak.png)
+![API Protected Kong Keykloak](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-access-unauthorized.png)
 
 Agora, vamos gerar o access token para acessar a API protegida, fornecendo as credenciais de usuário e senha da aplicação configuradas no Keycloak.
 
-![API Token Generated](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/geração-token-jwt-keycloak.png)
+![API Token Generated](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-access-token-generate.png)
 
 Após a geração do access token, podemos acessá-la sem problemas.
 
-![API Access](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/chamada-api-kong-keycloak-sucesso.png)
+![API Access](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/keycloak-access-succsess.png)

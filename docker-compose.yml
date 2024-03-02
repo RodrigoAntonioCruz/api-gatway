@@ -83,9 +83,10 @@ services:
       POSTGRES_PASSWORD: password
 
   keycloak:
-    image: quay.io/keycloak/keycloak:17.0.0
+    image: quay.io/keycloak/keycloak:23.0.3
     depends_on:
       - keycloak-db
+    #command: ["start", "--hostname-url=http://192.168.0.133:8180", "--hostname-strict-https=false"]
     command: start-dev
     networks:
       - keycloak-net
