@@ -1,5 +1,6 @@
 
-![Logo](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/logo.png)
+<img src="https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/logo.png" alt="Logo" align="center">
+
 
 ### Konga / Kong / Keycloak: protegendo API com OIDC
 
