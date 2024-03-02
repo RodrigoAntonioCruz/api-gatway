@@ -192,10 +192,10 @@ curl -s -X POST http://192.168.0.133:8001/services \
 }
 ```
 
-3.2 Anote o ID do serviço registrado (no exemplo é 580b9448-d6b9-47aa-8f42-e275f44b8296) e use-o para fazer a próxima chamada à API do kong que permite adicionar uma rota ao serviço registrado.
+3.2 Anote o ID do serviço registrado (no exemplo é de01eaa8-5502-452c-9dcf-b06734f30e1f) e use-o para fazer a próxima chamada à API do kong que permite adicionar uma rota ao serviço registrado.
 
 ```bash
-curl -s -X POST http://192.168.0.133:8001/services/42f8abea-b857-4c2d-8a2c-bb0c15a4597f/routes -d "paths[]=/products" \
+curl -s -X POST http://192.168.0.133:8001/services/de01eaa8-5502-452c-9dcf-b06734f30e1f/routes -d "paths[]=/products" \
     | python -mjson.tool
 {
     "destinations": null,
