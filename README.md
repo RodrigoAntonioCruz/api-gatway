@@ -1,4 +1,7 @@
-## Konga / Kong / Keycloak: protegendo API com OIDC
+
+![Logo](https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/logo.png)
+
+### Konga / Kong / Keycloak: protegendo API com OIDC
 
 
 ### Requisitos
