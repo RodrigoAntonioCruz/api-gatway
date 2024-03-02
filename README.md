@@ -1,9 +1,11 @@
 
-<img src="https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/logo.png" alt="Logo" align="center">
+<p align="center">
+  <img align="center" alt="Logo WebJump" src="https://raw.githubusercontent.com/RodrigoAntonioCruz/assets/main/Kong/logo.png" />
+</p>
 
-
-### Konga / Kong / Keycloak: protegendo API com OIDC
-
+<h2 align="center">
+ Konga / Kong / Keycloak: protegendo API com OIDC
+</h2>
 
 ### Requisitos
 
